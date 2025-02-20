@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #4a90e2;
+        --success-color: #2ecc71;
+        --danger-color: #e74c3c;
+        --background-gradient: linear-gradient(135deg, #6983aa, #79a6d2);
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: var(--background-gradient);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 800px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      h1 {
+        color: var(--primary-color);
+        text-align: center;
+      }
+
+      .task-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .task-form input,
+      .btn {
+        padding: 0.8rem;
+        border-radius: 10px;
+        font-size: 1rem;
+      }
+
+      .btn {
+        cursor: pointer;
+        border: none;
+        font-weight: 600;
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+      .btn-success {
+        background: var(--success-color);
+        color: white;
+      }
+      .btn-danger {
+        background: var(--danger-color);
+        color: white;
+      }
+
+      .task-list {
+        list-style: none;
+        margin-top: 2rem;
+      }
+
+      .task-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .completed {
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="notification" id="notification"></div>
+
+    <div class="container animate__animated animate__fadeIn">
+      <h1>Task Manager</h1>
+
+      <form class="task-form" id="taskForm">
+        <input
+          type="text"
+          id="taskInput"
+          placeholder="Masukkan Tugas"
+          required
+        />
+        <input type="date" id="deadlineInput" required />
+        <button type="submit" class="btn btn-primary">Tambah Tugas</button>
+      </form>
+
+      <div class="task-list" id="taskList"></div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        loadTasks();
+        document.getElementById("taskForm").addEventListener("submit", addTask);
+      });
+
+      function showNotification(message) {
+        const notification = document.getElementById("notification");
+        notification.textContent = message;
+        notification.style.display = "block";
+        setTimeout(() => {
+          notification.style.display = "none";
+        }, 3000);
+      }
+
+      function loadTasks() {
+        const taskList = document.getElementById("taskList");
+        taskList.innerHTML = "";
+        const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+        if (tasks.length === 0) {
+          taskList.innerHTML = '<p class="empty-state">Belum ada tugas.</p>';
+        } else {
+          tasks.forEach((task, index) => {
+            const taskItem = document.createElement("div");
+            taskItem.classList.add("task-item");
+            if (task.completed) taskItem.classList.add("completed");
+
+            taskItem.innerHTML = `
+                        <div class="task-content">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-deadline">Deadline: ${task.deadline}</div>
+                        </div>
+                        <button class="btn btn-success" onclick="completeTask(${index})">✓</button>
+                        <button class="btn btn-danger" onclick="deleteTask(${index})">×</button>
+                    `;
+
+            taskList.appendChild(taskItem);
+          });
+        }
+      }
+
+      function addTask(event) {
+        event.preventDefault();
+        const taskInput = document.getElementById("taskInput").value.trim();
+        const deadlineInput = document.getElementById("deadlineInput").value;
+
+        if (!taskInput || !deadlineInput) return;
+
+        const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+        tasks.push({
+          name: taskInput,
+          deadline: deadlineInput,
+          completed: false,
+        });
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+
+        showNotification("Tugas berhasil ditambahkan!");
+        document.getElementById("taskForm").reset();
+        loadTasks();
+      }
+
+      function completeTask(index) {
+        const tasks = JSON.parse(localStorage.getItem("tasks"));
+        tasks[index].completed = true;
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        showNotification("Tugas telah diselesaikan!");
+        loadTasks();
+      }
+
+      function deleteTask(index) {
+        const tasks = JSON.parse(localStorage.getItem("tasks"));
+        tasks.splice(index, 1);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        showNotification("Tugas berhasil dihapus!");
+        loadTasks();
+      }
+    </script>
+  </body>
+</html>
